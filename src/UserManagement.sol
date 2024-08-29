@@ -34,9 +34,10 @@ contract UserManagement is AccessControl, Pausable {
     event JobCompleted(address indexed userAddress, uint256 earnings);
     event UserActivityUpdated(address indexed userAddress, uint256 timestamp);
 
+
     constructor() {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
     }
 
     function registerUser(bool _isFreelancer) external whenNotPaused {

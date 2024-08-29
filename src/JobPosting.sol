@@ -7,6 +7,8 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { UserManagement } from "../src/UserManagement.sol";
+import {Counters } from "@openzeppelin/contracts/utils/Counters.sol";
+
 
 contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
@@ -51,9 +53,9 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     constructor(address _userManagementAddress, address _paymentTokenAddress) {
         userManagement = UserManagement(_userManagementAddress);
         paymentToken = IERC20(_paymentTokenAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(JOB_MANAGER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(JOB_MANAGER_ROLE, msg.sender);
     }
 
     modifier onlyClient(uint256 _jobId) {

@@ -40,9 +40,9 @@ contract Escrow is AccessControl, ReentrancyGuard, Pausable {
     constructor(address _paymentTokenAddress, address _jobPostingAddress) {
         paymentToken = IERC20(_paymentTokenAddress);
         jobPosting = JobPosting(_jobPostingAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(ESCROW_MANAGER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(ESCROW_MANAGER_ROLE, msg.sender);
     }
 
     modifier onlyJobParticipant(uint256 _jobId) {

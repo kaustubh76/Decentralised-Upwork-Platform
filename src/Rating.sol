@@ -33,9 +33,9 @@ contract Rating is AccessControl, Pausable {
     constructor(address _userManagementAddress, address _jobPostingAddress) {
         userManagement = UserManagement(_userManagementAddress);
         jobPosting = JobPosting(_jobPostingAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(RATING_MANAGER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(RATING_MANAGER_ROLE, msg.sender);
     }
 
     function submitRating(uint256 _jobId, address _rated, uint8 _score, string memory _comment) external whenNotPaused {
