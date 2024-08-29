@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./UserManagement.sol";
-import "./JobPosting.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import { UserManagement } from "../src/UserManagement.sol";
+import { JobPosting } from "../src/JobPosting.sol";
 
 contract ProposalManagement is Ownable, Pausable, ReentrancyGuard {
     UserManagement public userManagement;

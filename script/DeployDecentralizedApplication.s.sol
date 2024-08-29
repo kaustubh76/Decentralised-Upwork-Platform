@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
-import "../src/UserManagement.sol";
-import "../src/JobPosting.sol";
-import "../src/ProposalManagement.sol";
-import "../src/WorkSubmission.sol";
+import { UserManagement } from "../src/UserManagement.sol";
+import { JobPosting } from "../src/JobPosting.sol";
+import { ProposalManagement} from "../src/ProposalManagement.sol";
+import { WorkSubmission } from "../src/WorkSubmission.sol";
 
 contract DeployWeb3Upwork is Script {
     function run() external {
