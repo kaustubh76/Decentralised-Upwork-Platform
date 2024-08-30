@@ -6,6 +6,7 @@ import { UserManagement } from "../src/UserManagement.sol";
 import { JobPosting } from "../src/JobPosting.sol";
 import { ProposalManagement} from "../src/ProposalManagement.sol";
 import { WorkSubmission } from "../src/WorkSubmission.sol";
+import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 
 contract DeployWeb3Upwork is Script {
     function run() external {
@@ -14,10 +15,14 @@ contract DeployWeb3Upwork is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
+        console.log('deployer: ', deployerAddress);
+
         UserManagement userManagement = new UserManagement();
         console.log("UserManagement deployed to:", address(userManagement));
 
-        JobPosting jobPosting = new JobPosting(address(userManagement));
+        ERC20Mock paymentToken = new ERC20Mock();
+
+        JobPosting jobPosting = new JobPosting(address(userManagement), address(paymentToken));
         console.log("JobPosting deployed to:", address(jobPosting));
 
         ProposalManagement proposalManagement = new ProposalManagement(address(userManagement), address(jobPosting));
@@ -25,11 +30,6 @@ contract DeployWeb3Upwork is Script {
 
         WorkSubmission workSubmission = new WorkSubmission(address(userManagement), address(jobPosting), address(proposalManagement));
         console.log("WorkSubmission deployed to:", address(workSubmission));
-
-        jobPosting.setProposalManagement(address(proposalManagement));
-        jobPosting.setWorkSubmission(address(workSubmission));
-
-        proposalManagement.setWorkSubmission(address(workSubmission));
 
         console.log("Post-deployment configuration completed");
 

@@ -33,12 +33,12 @@ contract ProposalManagement is Ownable, Pausable, ReentrancyGuard {
     event ProposalStatusChanged(uint256 indexed proposalId, ProposalStatus newStatus);
 
     modifier onlyFreelancer() {
-        require(userManagement.getUserRole(msg.sender) == UserManagement.UserRole.Freelancer, "Only freelancers can perform this action");
+        require(userManagement.getUser(msg.sender).isFreelancer, "Only freelancers can perform this action");
         _;
     }
 
     modifier onlyJobClient(uint256 _jobId) {
-        require(jobPosting.jobs(_jobId).client == msg.sender, "Only the job client can perform this action");
+        require(jobPosting.getJob(_jobId).client == msg.sender, "Only the job client can perform this action");
         _;
     }
 
@@ -58,8 +58,8 @@ contract ProposalManagement is Ownable, Pausable, ReentrancyGuard {
         nonReentrant 
         onlyFreelancer 
     {
-        require(userManagement.isUserActive(msg.sender), "Freelancer account is not active");
-        require(jobPosting.jobs(_jobId).status == JobPosting.JobStatus.Open, "Job is not open for proposals");
+        require(userManagement.getUser(msg.sender).isActive, "Freelancer account is not active");
+        require(jobPosting.getJob(_jobId).status == JobPosting.JobStatus.Posted, "Job is not open for proposals");
         require(_deliveryTime > block.timestamp, "Delivery time must be in the future");
         require(_bidAmount > 0, "Bid amount must be greater than zero");
 
@@ -89,7 +89,7 @@ contract ProposalManagement is Ownable, Pausable, ReentrancyGuard {
         Proposal storage proposal = proposals[_proposalId];
         require(proposal.freelancer == msg.sender, "Only the proposal owner can update it");
         require(proposal.status == ProposalStatus.Pending, "Can only update pending proposals");
-        require(jobPosting.jobs(proposal.jobId).status == JobPosting.JobStatus.Open, "Associated job is no longer open");
+        require(jobPosting.getJob(proposal.jobId).status == JobPosting.JobStatus.Posted, "Associated job is no longer open");
         require(_newDeliveryTime > block.timestamp, "New delivery time must be in the future");
         require(_newBidAmount > 0, "New bid amount must be greater than zero");
 
@@ -121,9 +121,9 @@ contract ProposalManagement is Ownable, Pausable, ReentrancyGuard {
         proposalExists(_proposalId) 
     {
         Proposal storage proposal = proposals[_proposalId];
-        require(jobPosting.jobs(proposal.jobId).client == msg.sender, "Only the job client can accept proposals");
+        require(jobPosting.getJob(proposal.jobId).client == msg.sender, "Only the job client can accept proposals");
         require(proposal.status == ProposalStatus.Pending, "Can only accept pending proposals");
-        require(jobPosting.jobs(proposal.jobId).status == JobPosting.JobStatus.Open, "Job is not open");
+        require(jobPosting.getJob(proposal.jobId).status == JobPosting.JobStatus.Posted, "Job is not open");
 
         proposal.status = ProposalStatus.Accepted;
         jobPosting.hireFreelancer(proposal.jobId, proposal.freelancer);

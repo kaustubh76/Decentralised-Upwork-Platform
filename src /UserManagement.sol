@@ -3,10 +3,8 @@ pragma solidity ^0.8.20;
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 
 contract UserManagement is AccessControl, Pausable {
-    using Counters for Counters.Counter;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
@@ -22,7 +20,7 @@ contract UserManagement is AccessControl, Pausable {
     }
 
     mapping(address => User) public users;
-    Counters.Counter private _userIdCounter;
+    uint256 private _userIdCounter;
 
     uint256 public constant MAX_REPUTATION = 100;
     uint256 public constant INACTIVITY_THRESHOLD = 180 days;
@@ -42,7 +40,7 @@ contract UserManagement is AccessControl, Pausable {
 
     function registerUser(bool _isFreelancer) external whenNotPaused {
         require(users[msg.sender].userAddress == address(0), "User already registered");
-        uint256 userId = _userIdCounter.current();
+        uint256 userId = _userIdCounter;
         users[msg.sender] = User({
             userAddress: msg.sender,
             isFreelancer: _isFreelancer,
@@ -52,7 +50,7 @@ contract UserManagement is AccessControl, Pausable {
             totalEarnings: 0,
             lastActivityTimestamp: block.timestamp
         });
-        _userIdCounter.increment();
+        ++_userIdCounter;
         emit UserRegistered(msg.sender, _isFreelancer, userId);
     }
 
@@ -92,7 +90,7 @@ contract UserManagement is AccessControl, Pausable {
     }
 
     function deactivateInactiveUsers() external onlyRole(ADMIN_ROLE) {
-        for (uint256 i = 0; i < _userIdCounter.current(); i++) {
+        for (uint256 i = 0; i < _userIdCounter; i++) {
             address userAddress = getUserAddressById(i);
             if (users[userAddress].isActive && 
                 block.timestamp - users[userAddress].lastActivityTimestamp > INACTIVITY_THRESHOLD) {
@@ -103,14 +101,18 @@ contract UserManagement is AccessControl, Pausable {
     }
 
     function getUserAddressById(uint256 _userId) public view returns (address) {
-        require(_userId < _userIdCounter.current(), "Invalid user ID");
+        require(_userId < _userIdCounter, "Invalid user ID");
         // This is a simplification. In a real-world scenario, you'd need a more efficient way to map IDs to addresses.
-        for (uint256 i = 0; i < _userIdCounter.current(); i++) {
+        for (uint256 i = 0; i < _userIdCounter; i++) {
             if (i == _userId) {
                 return users[address(uint160(i))].userAddress;
             }
         }
         revert("User not found");
+    }
+
+    function getUser(address _user) external view returns (User memory) {
+        return users[_user];
     }
 
     function pauseContract() external onlyRole(ADMIN_ROLE) {

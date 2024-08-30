@@ -7,12 +7,10 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { UserManagement } from "../src/UserManagement.sol";
-import {Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 
 
 contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
-    using Counters for Counters.Counter;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant JOB_MANAGER_ROLE = keccak256("JOB_MANAGER_ROLE");
@@ -35,7 +33,7 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
 
     UserManagement public userManagement;
     IERC20 public paymentToken;
-    Counters.Counter private _jobIdCounter;
+    uint256 private _jobIdCounter;
     mapping(uint256 => Job) public jobs;
     mapping(uint256 => mapping(address => bool)) public jobProposals;
 
@@ -69,18 +67,18 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     }
 
     modifier jobExists(uint256 _jobId) {
-        require(_jobId < _jobIdCounter.current(), "Job does not exist");
+        require(_jobId < _jobIdCounter, "Job does not exist");
         _;
     }
 
     function createJob(string memory _ipfsHash, uint256 _budget, uint256 _deadline) external nonReentrant whenNotPaused {
-        require(userManagement.users(msg.sender).userAddress != address(0), "User not registered");
-        require(!userManagement.users(msg.sender).isFreelancer, "Freelancers cannot create jobs");
+        require(userManagement.getUser(msg.sender).userAddress != address(0), "User not registered");
+        require(!userManagement.getUser(msg.sender).isFreelancer, "Freelancers cannot create jobs");
         require(_deadline > block.timestamp, "Deadline must be in the future");
         require(_deadline <= block.timestamp + MAX_JOB_DURATION, "Job duration exceeds maximum allowed");
         require(_budget >= MIN_JOB_BUDGET, "Job budget is below minimum allowed");
 
-        uint256 jobId = _jobIdCounter.current();
+        uint256 jobId = _jobIdCounter;
         jobs[jobId] = Job({
             id: jobId,
             client: msg.sender,
@@ -94,7 +92,7 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
             createdAt: block.timestamp,
             completedAt: 0
         });
-        _jobIdCounter.increment();
+        ++_jobIdCounter;
 
         paymentToken.safeTransferFrom(msg.sender, address(this), _budget);
 
@@ -102,7 +100,7 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     }
 
     function submitProposal(uint256 _jobId) external nonReentrant whenNotPaused jobExists(_jobId) {
-        require(userManagement.users(msg.sender).isFreelancer, "Only freelancers can submit proposals");
+        require(userManagement.getUser(msg.sender).isFreelancer, "Only freelancers can submit proposals");
         require(jobs[_jobId].status == JobStatus.Posted, "Job is not open for proposals");
         require(!jobProposals[_jobId][msg.sender], "Proposal already submitted");
         require(block.timestamp < jobs[_jobId].deadline, "Job deadline has passed");
@@ -113,7 +111,7 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
 
     function hireFreelancer(uint256 _jobId, address _freelancer) external nonReentrant whenNotPaused onlyClient(_jobId) onlyActiveJob(_jobId) {
         require(jobs[_jobId].hiredFreelancer == address(0), "Freelancer already hired");
-        require(userManagement.users(_freelancer).isFreelancer, "Hired address must be a freelancer");
+        require(userManagement.getUser(_freelancer).isFreelancer, "Hired address must be a freelancer");
         require(jobProposals[_jobId][_freelancer], "Freelancer has not submitted a proposal");
         require(block.timestamp < jobs[_jobId].deadline, "Job deadline has passed");
 
@@ -176,21 +174,21 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
     }
 
     function getJob(uint256 _jobId) external view returns (Job memory) {
-        require(_jobId < _jobIdCounter.current(), "Job does not exist");
+        require(_jobId < _jobIdCounter, "Job does not exist");
         return jobs[_jobId];
     }
 
     function getJobProposals(uint256 _jobId) external view returns (address[] memory) {
-        require(_jobId < _jobIdCounter.current(), "Job does not exist");
+        require(_jobId < _jobIdCounter, "Job does not exist");
         uint256 proposalCount = 0;
-        for (uint256 i = 0; i < _jobIdCounter.current(); i++) {
+        for (uint256 i = 0; i < _jobIdCounter; i++) {
             if (jobProposals[_jobId][address(uint160(i))]) {
                 proposalCount++;
             }
         }
         address[] memory proposals = new address[](proposalCount);
         uint256 index = 0;
-        for (uint256 i = 0; i < _jobIdCounter.current(); i++) {
+        for (uint256 i = 0; i < _jobIdCounter; i++) {
             if (jobProposals[_jobId][address(uint160(i))]) {
                 proposals[index] = address(uint160(i));
                 index++;
@@ -213,7 +211,7 @@ contract JobPosting is AccessControl, ReentrancyGuard, Pausable {
 
     function getActiveJobCount() external view returns (uint256) {
         uint256 activeCount = 0;
-        for (uint256 i = 0; i < _jobIdCounter.current(); i++) {
+        for (uint256 i = 0; i < _jobIdCounter; i++) {
             if (jobs[i].status == JobStatus.Posted || jobs[i].status == JobStatus.InProgress) {
                 activeCount++;
             }

@@ -40,13 +40,13 @@ contract Rating is AccessControl, Pausable {
 
     function submitRating(uint256 _jobId, address _rated, uint8 _score, string memory _comment) external whenNotPaused {
         require(_score >= MIN_RATING && _score <= MAX_RATING, "Invalid rating score");
-        require(jobPosting.jobs(_jobId).status == JobPosting.JobStatus.Completed, "Job is not completed");
+        require(jobPosting.getJob(_jobId).status == JobPosting.JobStatus.Completed, "Job is not completed");
         require(
-            msg.sender == jobPosting.jobs(_jobId).client || msg.sender == jobPosting.jobs(_jobId).hiredFreelancer,
+            msg.sender == jobPosting.getJob(_jobId).client || msg.sender == jobPosting.getJob(_jobId).hiredFreelancer,
             "Only job participants can submit ratings"
         );
         require(
-            _rated == jobPosting.jobs(_jobId).client || _rated == jobPosting.jobs(_jobId).hiredFreelancer,
+            _rated == jobPosting.getJob(_jobId).client || _rated == jobPosting.getJob(_jobId).hiredFreelancer,
             "Invalid rated address"
         );
         require(msg.sender != _rated, "Cannot rate yourself");

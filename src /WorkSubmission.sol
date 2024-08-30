@@ -34,20 +34,20 @@ contract WorkSubmission is Ownable, Pausable, ReentrancyGuard {
 
     modifier onlyJobParticipants(uint256 _jobId) {
         require(
-            jobPosting.jobs(_jobId).client == msg.sender || 
-            jobPosting.jobs(_jobId).hiredFreelancer == msg.sender,
+            jobPosting.getJob(_jobId).client == msg.sender || 
+            jobPosting.getJob(_jobId).hiredFreelancer == msg.sender,
             "Only job participants can perform this action"
         );
         _;
     }
 
     modifier onlyJobClient(uint256 _jobId) {
-        require(jobPosting.jobs(_jobId).client == msg.sender, "Only the job client can perform this action");
+        require(jobPosting.getJob(_jobId).client == msg.sender, "Only the job client can perform this action");
         _;
     }
 
     modifier onlyJobFreelancer(uint256 _jobId) {
-        require(jobPosting.jobs(_jobId).hiredFreelancer == msg.sender, "Only the hired freelancer can perform this action");
+        require(jobPosting.getJob(_jobId).hiredFreelancer == msg.sender, "Only the hired freelancer can perform this action");
         _;
     }
 
@@ -63,7 +63,7 @@ contract WorkSubmission is Ownable, Pausable, ReentrancyGuard {
         nonReentrant 
         onlyJobFreelancer(_jobId) 
     {
-        require(jobPosting.jobs(_jobId).status == JobPosting.JobStatus.InProgress, "Job is not in progress");
+        require(jobPosting.getJob(_jobId).status == JobPosting.JobStatus.InProgress, "Job is not in progress");
         
         submissionCounter++;
         Submission memory newSubmission = Submission({
