@@ -102,7 +102,7 @@ contract UserManagement is AccessControl, Pausable {
 
     function getUserAddressById(uint256 _userId) public view returns (address) {
         require(_userId < _userIdCounter, "Invalid user ID");
-        // This is a simplification. In a real-world scenario, you'd need a more efficient way to map IDs to addresses.
+        // need a more efficient way to map IDs to addresses.
         for (uint256 i = 0; i < _userIdCounter; i++) {
             if (i == _userId) {
                 return users[address(uint160(i))].userAddress;
